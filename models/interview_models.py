@@ -105,6 +105,8 @@ class SessionResponse(BaseModel):
     agent_token: str
     livekit_url: str
     status: InterviewStatus
+    questions: Optional[List[str]] = []  # Preview of questions
+    ai_enabled: Optional[bool] = False  # Whether AI is available
 
 class StartInterviewRequest(BaseModel):
     session_id: str
