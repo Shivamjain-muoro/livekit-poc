@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  livekit-simple:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server-simple
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    environment:
+      LIVEKIT_KEYS: "devkey: secret"
+      LIVEKIT_PORT: 7880
+      LIVEKIT_BIND_ADDRESSES: "0.0.0.0"
+      LIVEKIT_RTC_TCP_PORT: 7881
+      LIVEKIT_RTC_PORT_RANGE_START: 50000
+      LIVEKIT_RTC_PORT_RANGE_END: 60000
+      LIVEKIT_DEVELOPMENT: true
+      LIVEKIT_LOG_LEVEL: info
+    command: --dev --bind 0.0.0.0 --port 7880
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: livekit-redis-simple
+    ports:
+      - "6379:6379"
+    restart: unless-stopped

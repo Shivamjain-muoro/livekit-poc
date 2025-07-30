@@ -1,0 +1,25 @@
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  use_external_ip: false
+
+redis:
+  address: "livekit-redis:6379"
+
+keys:
+  devkey: secret
+
+log_level: info
+
+room:
+  auto_create: true
+  join_timeout: 45s
+  empty_timeout: 5m
+  max_participants: 100
+
+development: true

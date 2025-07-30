@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server
+    ports:
+      - "7880:7880"    # WebSocket port
+      - "7881:7881"    # TCP port for ICE
+      - "7882:7882/udp" # UDP port range start
+    environment:
+      - LIVEKIT_KEYS=devkey:secret
+    volumes:
+      - ./livekit.yaml:/livekit.yaml:ro
+    command: --config /livekit.yaml --bind 0.0.0.0
+    restart: unless-stopped
+    networks:
+      - livekit-network
+
+  redis:
+    image: redis:alpine
+    container_name: livekit-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - livekit-network
+    restart: unless-stopped
+
+networks:
+  livekit-network:
+    driver: bridge

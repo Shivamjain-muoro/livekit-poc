@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview System - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 90%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin: 10px 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+        }
+        
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .feedback-card {
+            background: #e8f5e8;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #28a745;
+        }
+        
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        
+        .feedback-text {
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .progress-bar {
+            background: #e1e5e9;
+            border-radius: 10px;
+            height: 10px;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .overall-score {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .recommendation {
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 5px solid #c62828;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .timer {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Interview System</h1>
+            <p>Experience the future of hiring with AI-powered interviews</p>
+        </div>
+
+        <!-- Step 1: Candidate Information -->
+        <div id="step1" class="step active">
+            <h2>👋 Welcome! Let's get started</h2>
+            <p style="margin-bottom: 30px;">Please provide your information to begin the interview process.</p>
+            
+            <div class="form-group">
+                <label for="candidateName">Full Name *</label>
+                <input type="text" id="candidateName" placeholder="Enter your full name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="candidateEmail">Email Address *</label>
+                <input type="email" id="candidateEmail" placeholder="Enter your email address" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="position">Position Applying For *</label>
+                <select id="position" required>
+                    <option value="">Select a position</option>
+                    <option value="Software Engineer">Software Engineer</option>
+                    <option value="Frontend Developer">Frontend Developer</option>
+                    <option value="Backend Developer">Backend Developer</option>
+                    <option value="Full Stack Developer">Full Stack Developer</option>
+                    <option value="Data Scientist">Data Scientist</option>
+                    <option value="Product Manager">Product Manager</option>
+                    <option value="DevOps Engineer">DevOps Engineer</option>
+                    <option value="UI/UX Designer">UI/UX Designer</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="experienceLevel">Experience Level *</label>
+                <select id="experienceLevel" required>
+                    <option value="">Select experience level</option>
+                    <option value="entry">Entry Level (0-2 years)</option>
+                    <option value="mid">Mid Level (3-5 years)</option>
+                    <option value="senior">Senior Level (6-10 years)</option>
+                    <option value="lead">Lead/Principal (10+ years)</option>
+                </select>
+            </div>
+            
+            <button class="btn" onclick="createSession()">Create Interview Session</button>
+        </div>
+
+        <!-- Step 2: Session Created -->
+        <div id="step2" class="step">
+            <h2>✅ Session Created Successfully!</h2>
+            <div id="sessionInfo" class="status">
+                <p><strong>Session ID:</strong> <span id="sessionId"></span></p>
+                <p><strong>Room:</strong> <span id="roomName"></span></p>
+                <p><strong>Status:</strong> Ready to start</p>
+            </div>
+            
+            <p style="margin: 20px 0;">Your interview session has been created. When you're ready, click the button below to begin the interview.</p>
+            
+            <button class="btn" onclick="startInterview()">Start Interview</button>
+            <button class="btn btn-secondary" onclick="goToStep(1)">Edit Information</button>
+        </div>
+
+        <!-- Step 3: Interview in Progress -->
+        <div id="step3" class="step">
+            <h2>🎯 Interview in Progress</h2>
+            
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <p style="text-align: center; margin-bottom: 30px;">Question <span id="currentQuestion">1</span> of <span id="totalQuestions">5</span></p>
+            
+            <div id="questionCard" class="question-card">
+                <div class="question-number">Question <span id="questionNumber">1</span></div>
+                <div id="questionText" class="question-text">Loading question...</div>
+                
+                <div class="timer" id="timer">
+                    ⏱️ Recommended time: <span id="recommendedTime">2:00</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="answerText">Your Answer *</label>
+                <textarea id="answerText" rows="8" placeholder="Type your answer here..." required></textarea>
+            </div>
+            
+            <button class="btn" onclick="submitAnswer()">Submit Answer</button>
+            <button class="btn btn-secondary" onclick="pauseInterview()" style="display: none;">Pause Interview</button>
+        </div>
+
+        <!-- Step 4: Feedback -->
+        <div id="step4" class="step">
+            <h2>📊 Answer Feedback</h2>
+            
+            <div id="feedbackCard" class="feedback-card">
+                <div class="score-display">Score: <span id="feedbackScore">-</span>/5</div>
+                <div id="feedbackText" class="feedback-text">Loading feedback...</div>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <h4>💪 Strengths:</h4>
+                <ul id="strengthsList"></ul>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <h4>🎯 Areas for Improvement:</h4>
+                <ul id="improvementsList"></ul>
+            </div>
+            
+            <button class="btn" onclick="nextQuestion()">Continue to Next Question</button>
+        </div>
+
+        <!-- Step 5: Interview Complete -->
+        <div id="step5" class="step">
+            <h2>🎉 Interview Complete!</h2>
+            
+            <div class="summary-card">
+                <h3>Interview Summary</h3>
+                <div class="overall-score" id="overallScore">-</div>
+                <div class="recommendation" id="recommendation">-</div>
+                
+                <div style="text-align: left; margin-top: 30px;">
+                    <h4>📈 Category Scores:</h4>
+                    <div id="categoryScores"></div>
+                    
+                    <h4 style="margin-top: 20px;">⭐ Key Strengths:</h4>
+                    <ul id="summaryStrengths"></ul>
+                    
+                    <h4 style="margin-top: 20px;">🚀 Growth Areas:</h4>
+                    <ul id="summaryImprovements"></ul>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="startNewInterview()">Start New Interview</button>
+                <button class="btn btn-secondary" onclick="downloadReport()">Download Report</button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentSessionId = '';
+        let currentQuestionId = '';
+        let currentQuestionIndex = 0;
+        let totalQuestions = 0;
+        let startTime = null;
+
+        const API_BASE = 'http://localhost:8002';
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            alert('Error: ' + message);
+        }
+
+        function goToStep(stepNumber) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // Show target step
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+        }
+
+        // Step 1: Create Session
+        async function createSession() {
+            const name = document.getElementById('candidateName').value;
+            const email = document.getElementById('candidateEmail').value;
+            const position = document.getElementById('position').value;
+            const experienceLevel = document.getElementById('experienceLevel').value;
+
+            if (!name || !email || !position || !experienceLevel) {
+                showError('Please fill in all required fields');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/interview/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        candidate: {
+                            name: name,
+                            email: email,
+                            position: position,
+                            experience_level: experienceLevel,
+                            skills: []
+                        },
+                        interview_type: 'technical'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentSessionId = data.session_id;
+                    document.getElementById('sessionId').textContent = data.session_id;
+                    document.getElementById('roomName').textContent = data.room_name;
+                    goToStep(2);
+                } else {
+                    showError(data.detail || 'Failed to create session');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Step 2: Start Interview
+        async function startInterview() {
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/interview/start/${currentSessionId}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentQuestionId = data.first_question.id;
+                    currentQuestionIndex = 1;
+                    totalQuestions = data.total_questions;
+                    startTime = Date.now();
+                    
+                    // Update UI
+                    document.getElementById('questionText').textContent = data.first_question.question_text;
+                    document.getElementById('questionNumber').textContent = '1';
+                    document.getElementById('currentQuestion').textContent = '1';
+                    document.getElementById('totalQuestions').textContent = totalQuestions;
+                    document.getElementById('recommendedTime').textContent = formatTime(data.first_question.expected_duration);
+                    
+                    updateProgress();
+                    goToStep(3);
+                } else {
+                    showError(data.detail || 'Failed to start interview');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Step 3: Submit Answer
+        async function submitAnswer() {
+            const answerText = document.getElementById('answerText').value;
+            
+            if (!answerText.trim()) {
+                showError('Please provide an answer');
+                return;
+            }
+
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/interview/answer/${currentSessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        question_id: currentQuestionId,
+                        answer_text: answerText,
+                        duration: duration
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Show feedback
+                    document.getElementById('feedbackScore').textContent = data.feedback.score;
+                    document.getElementById('feedbackText').textContent = data.feedback.feedback_text;
+                    
+                    // Show strengths
+                    const strengthsList = document.getElementById('strengthsList');
+                    strengthsList.innerHTML = '';
+                    data.feedback.strengths.forEach(strength => {
+                        const li = document.createElement('li');
+                        li.textContent = strength;
+                        strengthsList.appendChild(li);
+                    });
+                    
+                    // Show improvements
+                    const improvementsList = document.getElementById('improvementsList');
+                    improvementsList.innerHTML = '';
+                    data.feedback.improvements.forEach(improvement => {
+                        const li = document.createElement('li');
+                        li.textContent = improvement;
+                        improvementsList.appendChild(li);
+                    });
+                    
+                    // Store next question data
+                    if (data.is_complete) {
+                        // Show summary instead
+                        setTimeout(() => showSummary(data.session_summary), 3000);
+                    } else {
+                        window.nextQuestionData = data.next_question;
+                    }
+                    
+                    goToStep(4);
+                } else {
+                    showError(data.detail || 'Failed to submit answer');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Step 4: Next Question
+        function nextQuestion() {
+            if (window.nextQuestionData) {
+                currentQuestionId = window.nextQuestionData.id;
+                currentQuestionIndex++;
+                startTime = Date.now();
+                
+                // Update UI
+                document.getElementById('questionText').textContent = window.nextQuestionData.question_text;
+                document.getElementById('questionNumber').textContent = currentQuestionIndex;
+                document.getElementById('currentQuestion').textContent = currentQuestionIndex;
+                document.getElementById('recommendedTime').textContent = formatTime(window.nextQuestionData.expected_duration);
+                document.getElementById('answerText').value = '';
+                
+                updateProgress();
+                goToStep(3);
+            }
+        }
+
+        // Step 5: Show Summary
+        function showSummary(summary) {
+            document.getElementById('overallScore').textContent = summary.overall_score.toFixed(1) + '/5';
+            document.getElementById('recommendation').textContent = summary.recommendation.toUpperCase();
+            
+            // Category scores
+            const categoryScores = document.getElementById('categoryScores');
+            categoryScores.innerHTML = '';
+            for (const [category, score] of Object.entries(summary.category_scores)) {
+                const div = document.createElement('div');
+                div.innerHTML = `<strong>${category}:</strong> ${score.toFixed(1)}/5`;
+                categoryScores.appendChild(div);
+            }
+            
+            // Summary strengths
+            const summaryStrengths = document.getElementById('summaryStrengths');
+            summaryStrengths.innerHTML = '';
+            summary.strengths.forEach(strength => {
+                const li = document.createElement('li');
+                li.textContent = strength;
+                summaryStrengths.appendChild(li);
+            });
+            
+            // Summary improvements
+            const summaryImprovements = document.getElementById('summaryImprovements');
+            summaryImprovements.innerHTML = '';
+            summary.areas_for_improvement.forEach(improvement => {
+                const li = document.createElement('li');
+                li.textContent = improvement;
+                summaryImprovements.appendChild(li);
+            });
+            
+            goToStep(5);
+        }
+
+        // Utility functions
+        function updateProgress() {
+            const progress = (currentQuestionIndex / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function startNewInterview() {
+            location.reload();
+        }
+
+        function downloadReport() {
+            alert('Report download feature would be implemented here');
+        }
+
+        function pauseInterview() {
+            alert('Pause feature would be implemented here');
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('AI Interview System loaded successfully');
+        });
+    </script>
+</body>
+</html>
