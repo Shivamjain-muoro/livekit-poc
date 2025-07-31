@@ -1,0 +1,16 @@
+port: 7880
+bind_addresses:
+  - 0.0.0.0
+
+keys:
+  devkey: secret
+
+redis:
+  address: livekit-redis:6379
+
+log_level: info
+
+room:
+  auto_create: true
+
+development: true

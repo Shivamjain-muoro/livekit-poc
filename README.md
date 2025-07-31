@@ -1,179 +1,298 @@
-# 🤖 AI Interview System
+# LiveKit Interview System
 
-A comprehensive AI-powered interview platform built with Python, FastAPI, LiveKit, and LLM integration. This system provides a complete backend solution for conducting automated interviews with real-time evaluation and feedback.
+A professional AI-powered interview platform using LiveKit for real-time voice conversations, Google's Gemini AI for intelligent responses, and comprehensive data storage for interview analytics.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-### Core Functionality
-- **AI-Powered Interviews**: Automated question generation and evaluation
-- **Real-time Audio/Video**: LiveKit integration for live interviews  
-- **Smart Evaluation**: LLM-based answer scoring and feedback
-- **Progress Tracking**: Complete interview flow management
-- **Comprehensive Reporting**: Detailed candidate assessments
+### Prerequisites
+- Python 3.8+
+- Docker and Docker Compose
+- Google AI API key
 
-### Technical Stack
-- **Backend**: FastAPI with async support
-- **Database**: SQLite (development) / PostgreSQL (production ready)
-- **AI Integration**: OpenAI GPT-4 with Google Gemini fallback
-- **Real-time**: LiveKit for audio/video communication
-- **Frontend**: Responsive HTML/CSS/JavaScript demo
-
-## 🎯 Quick Start
-
-### 1. Start the Backend
+### 1. Clone and Setup
 ```bash
+git clone <your-repo-url>
 cd livekit-poc
-python enhanced_backend.py
 ```
 
-### 2. Access the Demo
-- **Demo Interface**: http://localhost:8002
-- **API Documentation**: http://localhost:8002/docs
-- **Health Check**: http://localhost:8002/health
-
-### 3. Test Complete Flow
-1. Open the demo at http://localhost:8002
-2. Fill in candidate information
-3. Create and start interview session
-4. Answer questions and receive AI feedback
-5. View comprehensive interview summary
-- **Comprehensive Evaluation & Scoring**
-- **Interview Dashboard & Analytics**
-
-## 🚀 Quick Setup
-
-### 1. Install Dependencies
+### 2. Environment Configuration
+Copy the environment template and add your API keys:
 ```bash
-pip install -r requirements.txt
+cp config/.env.example config/.env
 ```
 
-### 2. Environment Setup
-Create a `.env` file with your credentials:
-```env
-# Google Cloud credentials for speech/LLM
-GOOGLE_APPLICATION_CREDENTIALS=path/to/your/service-account.json
-
-# Optional: Email notifications
-GMAIL_USER=your.email@gmail.com
-GMAIL_APP_PASSWORD=your_app_password
-
-# LiveKit credentials (if using hosted service)
-LIVEKIT_URL=wss://your-livekit-url.com
-LIVEKIT_API_KEY=your_api_key
-LIVEKIT_API_SECRET=your_api_secret
+Edit `config/.env` and add your Google AI API key:
+```
+GOOGLE_API_KEY=your_google_ai_api_key_here
+LIVEKIT_URL=ws://localhost:7880
+LIVEKIT_API_KEY=devkey
+LIVEKIT_API_SECRET=secret
 ```
 
-### 3. Run Demo
+### 3. Install Dependencies
 ```bash
-python demo.py
+pip install -r config/requirements.txt
 ```
 
-## 🎬 Demo Flow
+### 4. Start the LiveKit Server
+```bash
+cd docker
+docker-compose up -d
+```
 
-### For Your Manager Demo:
+Verify the server is running:
+```bash
+docker ps
+```
 
-1. **Start the Interview Agent**
+You should see both `livekit-server` and `livekit-redis` containers running.
+
+### 5. Start the Interview Agent
+```bash
+# From the project root
+python core/pure_livekit_interview_agent.py dev
+```
+
+### 6. Create an Interview Session
+In a new terminal:
+```bash
+python utils/generate_web_url.py
+```
+
+This will generate a web URL that candidates can use to join the interview.
+
+## 📊 Database Management
+
+### View All Interview Data
+```bash
+python utils/view_database.py
+```
+
+### Check Database Status
+```bash
+python utils/check_database.py
+```
+
+### Query Specific Interviews
+```bash
+python utils/query_interviews.py
+```
+
+### Simple Data Viewer
+```bash
+python utils/simple_view_data.py
+```
+
+## 🗂️ Project Structure
+
+```
+livekit-interview-system/
+├── 📂 core/                    # Main system files
+│   ├── pure_livekit_interview_agent.py    # Main LiveKit agent
+│   ├── interview_tools.py                 # Function tools with database
+│   └── interview_prompts.py               # AI instructions and prompts
+├── 📂 config/                  # Configuration
+│   ├── .env                              # Environment variables
+│   ├── .env.example                      # Environment template
+│   ├── requirements.txt                  # Python dependencies
+│   └── livekit.yaml                      # LiveKit server config
+├── 📂 database/                # Data storage
+│   └── interview_sessions.db             # SQLite database
+├── 📂 docker/                  # LiveKit server setup
+│   ├── docker-compose.yml               # Main Docker config
+│   └── docker-compose-simple.yml        # Alternative config
+├── 📂 utils/                   # Helper scripts
+│   ├── generate_web_url.py               # URL/token generator
+│   ├── view_database.py                  # Database viewer
+│   ├── simple_view_data.py               # Simple data viewer
+│   ├── query_interviews.py               # Interview queries
+│   └── check_database.py                 # Database checker
+├── 📂 tests/                   # Testing
+│   ├── test_complete_flow.py             # Complete system test
+│   └── test_client.html                  # Web test client
+└── 📂 docs/                    # Documentation
+```
+
+## 🛠️ Troubleshooting
+
+### LiveKit Server Issues
+
+**Check server status:**
+```bash
+cd docker
+docker ps
+docker logs livekit-server --tail 20
+```
+
+**Restart the server:**
+```bash
+docker-compose restart
+```
+
+**Server won't start:**
+1. Check if ports 7880-7882 are available
+2. Verify Docker is running
+3. Check the configuration in `docker-compose.yml`
+
+### Database Issues
+
+**Database not found:**
+- The database is created automatically when first accessed
+- Ensure the `database/` folder exists
+- Check file permissions
+
+**View database tables:**
+```bash
+sqlite3 database/interview_sessions.db ".tables"
+```
+
+### Agent Connection Issues
+
+**Agent won't connect:**
+1. Ensure LiveKit server is running (`docker ps`)
+2. Check environment variables in `config/.env`
+3. Verify Google API key is valid
+4. Check network connectivity
+
+### Environment Issues
+
+**Missing dependencies:**
+```bash
+pip install -r config/requirements.txt
+```
+
+**Python path issues:**
+Make sure you're running from the project root directory.
+
+## 🎯 Usage Workflows
+
+### Starting a Complete Interview Session
+
+1. **Start the infrastructure:**
    ```bash
-   python agent.py
+   cd docker && docker-compose up -d
    ```
 
-2. **Start Web Dashboard** (in another terminal)
+2. **Start the agent:**
    ```bash
-   python dashboard.py
+   python core/pure_livekit_interview_agent.py dev
    ```
-   Then open http://localhost:8000
 
-3. **Demo Interview Flow:**
-   - "Hi, I want to start an interview"
-   - "My name is Alice Johnson, email alice@example.com, applying for software_engineer, mid level"
-   - Upload resume text
-   - Answer generated questions
-   - Get evaluation and feedback
+3. **Generate candidate URL:**
+   ```bash
+   python utils/generate_web_url.py
+   ```
 
-## 📊 Key Features Demo
+4. **Send URL to candidate** - they can join via browser
 
-### 1. Interview Session Management
-- Create sessions with candidate details
-- Track interview progress and status
-- Handle pause/resume functionality
+5. **Monitor the interview** via agent logs
 
-### 2. Smart Resume Analysis
-- Extract skills and experience automatically
-- Match candidates to job requirements
-- Generate role-specific questions
+6. **Check results:**
+   ```bash
+   python utils/view_database.py
+   ```
 
-### 3. Adaptive Question Generation
-- Technical questions based on job role
-- Behavioral questions for soft skills
-- Difficulty adjustment by experience level
+### Viewing Interview Results
 
-### 4. Real-time Interview Conduct
-- Timed questions with response tracking
-- Professional interview flow
-- Comprehensive answer recording
+After interviews are completed, you can view the data in several ways:
 
-### 5. Advanced Evaluation System
-- Multi-criteria scoring (technical, communication, etc.)
-- Weighted evaluation based on role requirements
-- Detailed feedback generation
-
-### 6. Analytics Dashboard
-- Session overview and statistics
-- Detailed interview reports
-- Candidate performance tracking
-
-## 🎯 Key MVP Features
-
-✅ **Complete Interview Flow**
-✅ **Resume Analysis**
-✅ **Question Generation** 
-✅ **Answer Evaluation**
-✅ **Score Calculation**
-✅ **Web Dashboard**
-✅ **Session Management**
-✅ **Data Persistence**
-
-## 🔧 Architecture
-
-```
-AI Interview Agent
-├── agent.py          # Main LiveKit agent
-├── tools.py          # Interview functions
-├── prompts.py        # AI instructions
-├── models.py         # Data structures
-├── config.py         # Settings
-├── database.py       # Data storage
-├── dashboard.py      # Web interface
-└── demo.py           # Demo script
+**Complete database view:**
+```bash
+python utils/view_database.py
 ```
 
-## 📈 Scalability Features
+**Quick data summary:**
+```bash
+python utils/simple_view_data.py
+```
 
-- **Database Integration**: Easy to switch to PostgreSQL/MongoDB
-- **API Ready**: RESTful endpoints for integration
-- **Modular Design**: Easy to add new features
-- **Cloud Deploy Ready**: Works with Docker/Kubernetes
+**Interactive queries:**
+```bash
+python utils/query_interviews.py
+```
 
-## 🎪 Demo Script for Manager
+## 🗄️ Database Schema
 
-"I'll demonstrate our AI Interview Agent MVP that rivals Mercor AI's functionality:
+The system uses SQLite with the following main tables:
 
-1. **Session Creation**: Creates structured interview sessions
-2. **Resume Processing**: Analyzes and extracts candidate skills
-3. **Smart Questions**: Generates role-specific questions automatically
-4. **Live Interview**: Conducts professional interviews with timing
-5. **Evaluation**: Provides comprehensive scoring and feedback
-6. **Dashboard**: Shows all interviews and analytics
+- **candidate_profiles** - Candidate information and session details
+- **interview_responses** - Questions, answers, and evaluations
+- **interview_sessions** - Session metadata and final assessments
 
-This MVP includes all core features needed for automated technical interviews and can be extended with video analysis, advanced AI evaluation, and more."
+## 🔧 Configuration
 
-## 📞 Next Steps for Production
+### LiveKit Server Configuration
+The server configuration is in `docker/docker-compose.yml` and uses environment variables for:
+- API keys and secrets
+- Redis connection
+- Development mode settings
+- Port configurations
 
-1. **Enhanced AI Evaluation** with GPT-4/Claude
-2. **Video Analysis** for behavior detection
-3. **Advanced Question Pool** with 1000+ questions
-4. **Integration APIs** for ATS systems
-5. **Mobile App** for candidates
-6. **Advanced Analytics** and ML insights
+### Agent Configuration
+The agent configuration is in `core/pure_livekit_interview_agent.py` and includes:
+- Google AI model settings
+- Voice configuration
+- Tool integrations
+- Error handling
 
-Ready to impress your manager! 🚀
+## 🧪 Testing
+
+**Run complete system test:**
+```bash
+python tests/test_complete_flow.py
+```
+
+**Test web client:**
+Open `tests/test_client.html` in a browser after generating a token.
+
+## 📝 Development
+
+### Adding New Interview Questions
+Edit `core/interview_tools.py` in the `generate_interview_questions` function.
+
+### Modifying AI Behavior
+Edit the prompts in `core/interview_prompts.py`.
+
+### Adding Database Fields
+Modify the schema in `core/interview_tools.py` in the database initialization functions.
+
+## 🚦 System Status Commands
+
+**Check everything is working:**
+```bash
+# 1. Check Docker containers
+docker ps
+
+# 2. Check database
+python utils/check_database.py
+
+# 3. Test token generation
+python utils/generate_web_url.py
+
+# 4. View existing data
+python utils/view_database.py
+```
+
+## 🎉 Success Indicators
+
+Your system is working correctly when:
+- ✅ Docker containers are running (livekit-server and livekit-redis)
+- ✅ Agent connects without errors
+- ✅ Token generation works
+- ✅ Database queries return data
+- ✅ Web client can connect to the generated URL
+
+## 📞 Support
+
+For issues:
+1. Check the troubleshooting section above
+2. Review Docker and agent logs
+3. Verify environment configuration
+4. Test each component individually
+
+## 🔐 Security Notes
+
+- Keep your `.env` file secure and never commit it to version control
+- Use strong API keys in production
+- Consider implementing authentication for production deployments
+- The current setup is designed for development/testing environments
