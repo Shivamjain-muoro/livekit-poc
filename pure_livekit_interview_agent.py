@@ -50,6 +50,7 @@ class InterviewAgent(Agent):
     """Pure LiveKit Interview Agent - Follows Friday/Jarvis Pattern"""
     
     def __init__(self) -> None:
+        print("🔧 AGENT: Initializing InterviewAgent with tools and instructions...")
         super().__init__(
             instructions=INTERVIEWER_INSTRUCTION,
             llm=google.beta.realtime.RealtimeModel(
@@ -64,17 +65,31 @@ class InterviewAgent(Agent):
                 complete_interview_session
             ],
         )
+        print("✅ AGENT: InterviewAgent initialized successfully!")
+        print("🛠️ AGENT: Tools configured:")
+        print("   - generate_interview_questions")
+        print("   - evaluate_candidate_response") 
+        print("   - get_candidate_profile")
+        print("   - save_interview_response")
+        print("   - complete_interview_session")
 
 async def entrypoint(ctx: agents.JobContext):
     """LiveKit Agent Entry Point - Pure LiveKit Implementation"""
     
-    # Create agent session using LiveKit Agents framework
-    session = AgentSession()
-
-    # Start the session with the interview agent
+    print("🎯 ENTRYPOINT: Creating LiveKit agent session...")
+    
+    # Create the interview agent with proper configuration
+    interview_agent = InterviewAgent()
+    print("🤖 ENTRYPOINT: Created InterviewAgent with tools and instructions")
+    
+    # Create agent session 
+    session = agents.AgentSession()
+    
+    # Start the session
+    print("🚀 ENTRYPOINT: Starting agent session...")
     await session.start(
         room=ctx.room,
-        agent=InterviewAgent(),
+        agent=interview_agent,  # Pass the configured agent
         room_input_options=RoomInputOptions(
             # Enable video for full interview experience
             video_enabled=True,
@@ -84,7 +99,9 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     # Connect to the LiveKit room
+    print("🔗 ENTRYPOINT: Connecting to LiveKit room...")
     await ctx.connect()
+    print("✅ ENTRYPOINT: Connected to room successfully")
 
     # Simple approach: wait a moment for participants, then start speaking
     import asyncio
@@ -97,6 +114,7 @@ async def entrypoint(ctx: agents.JobContext):
     if participants:
         print(f"🎤 Found participant(s): {[p.identity for p in participants]}")
         print("🤖 Starting interview conversation...")
+        print("🔄 Agent should now be able to call interview tools...")
         
         # The AgentSession with Google Realtime model should automatically start responding
         # when it receives the session instructions. Let's just wait for the natural flow.
