@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveKit Interview Test Client</title>
+    <script src="https://unpkg.com/livekit-client@1.15.13/dist/livekit-client.umd.js"></script>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { text-align: center; margin-bottom: 30px; }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: monospace;
+        }
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            min-height: 100px;
+        }
+        .success { border-left: 5px solid #4CAF50; }
+        .error { border-left: 5px solid #f44336; }
+        .info { border-left: 5px solid #2196F3; }
+        .controls { display: none; margin-top: 20px; }
+        .controls.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ LiveKit Interview Test Client</h1>
+        
+        <div class="form-group">
+            <label for="serverUrl">LiveKit Server URL:</label>
+            <input type="text" id="serverUrl" value="ws://localhost:7880" readonly>
+        </div>
+        
+        <div class="form-group">
+            <label for="token">Access Token:</label>
+            <textarea id="token" rows="4" placeholder="Paste your LiveKit access token here..."></textarea>
+        </div>
+        
+        <button class="btn" onclick="connectToInterview()" id="connectBtn">
+            🚀 Connect to Interview
+        </button>
+        
+        <div class="status info" id="status">
+            Ready to connect. Paste your token above and click Connect.
+        </div>
+        
+        <div class="controls" id="controls">
+            <button class="btn" onclick="enableMicrophone()" id="micBtn">
+                🎤 Enable Microphone
+            </button>
+            <button class="btn" onclick="disconnect()" style="background: #f44336;">
+                🛑 Disconnect
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let room = null;
+        let isConnected = false;
+
+        async function connectToInterview() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const token = document.getElementById('token').value.trim();
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            
+            if (!token) {
+                updateStatus('Please paste your access token first.', 'error');
+                return;
+            }
+            
+            connectBtn.disabled = true;
+            connectBtn.textContent = '🔄 Connecting...';
+            
+            try {
+                // Create LiveKit room
+                room = new LiveKitClient.Room();
+                
+                // Set up event handlers
+                room.on('connected', () => {
+                    updateStatus('✅ Connected to LiveKit room successfully!', 'success');
+                    isConnected = true;
+                    document.getElementById('controls').classList.add('show');
+                });
+                
+                room.on('participantConnected', (participant) => {
+                    updateStatus(`✅ Connected! Participant joined: ${participant.identity}`, 'success');
+                    if (participant.identity.includes('ai_interviewer')) {
+                        updateStatus('🤖 AI Interviewer has joined the room! Interview will begin shortly.', 'success');
+                    }
+                });
+                
+                room.on('trackSubscribed', (track, publication, participant) => {
+                    if (track.kind === 'audio') {
+                        updateStatus(`🎧 Subscribed to audio from: ${participant.identity}`, 'info');
+                        
+                        // Attach audio track to play AI voice
+                        const audioElement = track.attach();
+                        audioElement.autoplay = true;
+                        document.body.appendChild(audioElement);
+                        
+                        updateStatus('🔊 You should now hear the AI interviewer speaking!', 'success');
+                    }
+                });
+                
+                room.on('dataReceived', (data, participant) => {
+                    try {
+                        const message = JSON.parse(new TextDecoder().decode(data));
+                        updateStatus(`📨 Message from ${participant.identity}: ${JSON.stringify(message)}`, 'info');
+                    } catch (e) {
+                        updateStatus(`📨 Data received from ${participant.identity}`, 'info');
+                    }
+                });
+                
+                room.on('disconnected', () => {
+                    updateStatus('🔌 Disconnected from interview room.', 'info');
+                    isConnected = false;
+                    document.getElementById('controls').classList.remove('show');
+                    connectBtn.disabled = false;
+                    connectBtn.textContent = '🚀 Connect to Interview';
+                });
+                
+                // Connect to the room
+                await room.connect(serverUrl, token);
+                
+            } catch (error) {
+                updateStatus(`❌ Connection failed: ${error.message}`, 'error');
+                connectBtn.disabled = false;
+                connectBtn.textContent = '🚀 Connect to Interview';
+            }
+        }
+        
+        async function enableMicrophone() {
+            const micBtn = document.getElementById('micBtn');
+            
+            if (!room || !isConnected) {
+                updateStatus('❌ Not connected to room yet.', 'error');
+                return;
+            }
+            
+            try {
+                micBtn.disabled = true;
+                micBtn.textContent = '🔄 Enabling microphone...';
+                
+                // Create and publish audio track
+                const audioTrack = await LiveKitClient.createLocalAudioTrack();
+                await room.localParticipant.publishTrack(audioTrack);
+                
+                updateStatus('🎤 Microphone enabled! You can now speak to the AI interviewer.', 'success');
+                micBtn.textContent = '✅ Microphone Active';
+                
+            } catch (error) {
+                updateStatus(`❌ Microphone setup failed: ${error.message}`, 'error');
+                micBtn.disabled = false;
+                micBtn.textContent = '🎤 Enable Microphone';
+            }
+        }
+        
+        function disconnect() {
+            if (room) {
+                room.disconnect();
+            }
+        }
+        
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            
+            // Add timestamp
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // Auto-populate token if available from URL parameters
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                document.getElementById('token').value = token;
+            }
+        });
+    </script>
+</body>
+</html>
