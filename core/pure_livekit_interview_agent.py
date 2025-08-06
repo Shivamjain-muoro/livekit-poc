@@ -27,8 +27,8 @@ from livekit.plugins import (
 from livekit.plugins import google
 import google.generativeai as genai
 import os
-from interview_prompts import INTERVIEWER_INSTRUCTION, SESSION_INSTRUCTION
-from interview_tools import (
+from .interview_prompts import INTERVIEWER_INSTRUCTION, SESSION_INSTRUCTION
+from .interview_tools import (
     generate_interview_questions,
     evaluate_candidate_response,
     get_candidate_profile,
@@ -36,11 +36,7 @@ from interview_tools import (
     complete_interview_session
 )
 
-load_dotenv(os.path.join('..', 'config', '.env'))  # Load from config folder
-if not os.getenv("GOOGLE_API_KEY"):
-    load_dotenv('config/.env')  # Alternative path
-if not os.getenv("GOOGLE_API_KEY"):
-    load_dotenv()  # Fallback to current directory
+load_dotenv()
 
 # Configure Google API
 google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -80,51 +76,36 @@ class InterviewAgent(Agent):
 async def entrypoint(ctx: agents.JobContext):
     """LiveKit Agent Entry Point - Pure LiveKit Implementation"""
     
-    print("🎯 ENTRYPOINT: Creating LiveKit agent session...")
+    print("🎯 ENTRYPOINT: Starting LiveKit agent session...")
     
-    # Create the interview agent with proper configuration
-    interview_agent = InterviewAgent()
-    print("🤖 ENTRYPOINT: Created InterviewAgent with tools and instructions")
-    
-    # Create agent session 
-    session = agents.AgentSession()
-    
-    # Start the session
-    print("🚀 ENTRYPOINT: Starting agent session...")
-    await session.start(
-        room=ctx.room,
-        agent=interview_agent,  # Pass the configured agent
-        room_input_options=RoomInputOptions(
-            # Enable video for full interview experience
-            video_enabled=True,
-            # LiveKit enhanced noise cancellation for clear audio
-            noise_cancellation=noise_cancellation.BVC(),
-        ),
-    )
-
-    # Connect to the LiveKit room
-    print("🔗 ENTRYPOINT: Connecting to LiveKit room...")
-    await ctx.connect()
-    print("✅ ENTRYPOINT: Connected to room successfully")
-
-    # Simple approach: wait a moment for participants, then start speaking
-    import asyncio
-    await asyncio.sleep(3)  # Give more time for full connection
-    
-    # Check if we have participants (excluding the agent)
-    participants = [p for p in ctx.room.remote_participants.values() 
-                   if not p.identity.startswith("ai_") and not p.identity.startswith("agent")]
-    
-    if participants:
-        print(f"🎤 Found participant(s): {[p.identity for p in participants]}")
-        print("🤖 Starting interview conversation...")
-        print("🔄 Agent should now be able to call interview tools...")
+    try:
+        # Connect to the LiveKit room first
+        await ctx.connect()
+        print("✅ ENTRYPOINT: Connected to room successfully")
         
-        # The AgentSession with Google Realtime model should automatically start responding
-        # when it receives the session instructions. Let's just wait for the natural flow.
-        print("🔄 Waiting for AI to begin speaking based on session instructions...")
-    else:
-        print("⏳ Waiting for participants to join...")
+        # Create the interview agent
+        interview_agent = InterviewAgent()
+        print("🤖 ENTRYPOINT: Created InterviewAgent with tools and instructions")
+        
+        # Create session associated with the room context - CORRECT METHOD
+        session = ctx.new_agent_session(
+            agent=interview_agent,
+            room_input_options=RoomInputOptions(
+                video_enabled=True,
+                noise_cancellation=noise_cancellation.BVC(),
+            ),
+        )
+        
+        # Start the session - THIS KEEPS THE AGENT ALIVE AND CONNECTED
+        print("🚀 ENTRYPOINT: Starting agent session (this will keep the agent connected)...")
+        await session.start()
+        
+        print("✅ ENTRYPOINT: Agent session started successfully")
+        
+    except Exception as e:
+        print(f"❌ ENTRYPOINT: Error occurred: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     """
