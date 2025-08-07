@@ -15,17 +15,13 @@ import logging
 import asyncio
 from datetime import datetime
 
-# Import REAL-TIME tools with instant response and AUTOMATED evaluation
-from realtime_interview_tools import (
-    start_interview_session,
-    record_candidate_response,
-    get_real_time_progress,
-    end_interview_session,
-    auto_start_session_from_context,
-    get_automated_evaluation_summary
-)
+# Import enhanced fast tools
 from fast_interview_tools import (
-    ask_interview_question,
+    start_interview_session,
+    ask_interview_question, 
+    record_candidate_response,
+    get_live_interview_status,
+    end_interview_session,
     get_quick_feedback
 )
 from background_evaluator import get_background_evaluator
@@ -42,100 +38,49 @@ if google_api_key:
 else:
     print("❌ GOOGLE_API_KEY not found in environment")
 
-# Configure detailed logging for interview agent
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('interview_detailed.log'),
-        logging.StreamHandler()
-    ]
-)
-
-# Create logger for this module
-logger = logging.getLogger('InterviewAgent')
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # ENHANCED FAST NON-BLOCKING INTERVIEW PROMPTS
 INTERVIEWER_INSTRUCTION = """
-# REAL-TIME AI INTERVIEWER - NATURAL CONVERSATION WITH AUTOMATIC RECORDING
+# ENHANCED AI INTERVIEWER - FAST & COMPREHENSIVE
+You are a professional AI interviewer conducting natural, flowing voice interviews with advanced background processing.
 
-You are a professional AI interviewer with ONE CRITICAL REQUIREMENT: RECORD EVERY CONVERSATION EXCHANGE.
+# IMMEDIATE START PROTOCOL
+When a candidate joins, IMMEDIATELY start with:
+"Hello! I'm your AI interviewer today. I'm excited to learn about your background and experience. Let's begin our conversation."
 
-## 🚨 CRITICAL: CONVERSATION RECORDING PROTOCOL 🚨
-After EVERY substantive response from the candidate, you MUST:
-1. Call get_real_time_progress (to get session_id)
-2. IMMEDIATELY call record_candidate_response with:
-   - session_id: from get_real_time_progress
-   - question: YOUR exact question
-   - response: Their complete response
-   - response_duration: estimate in seconds
-
-THIS IS MANDATORY - NO EXCEPTIONS!
-
-## IMMEDIATE START PROTOCOL
-When a candidate joins, start with:
-"Hello! I'm your AI interviewer today. Let's begin. Can you tell me your name and a bit about your background?"
-
-## CONVERSATION RECORDING WORKFLOW
-1. Ask a question
-2. Listen to their response
-3. IMMEDIATELY call get_real_time_progress 
-4. IMMEDIATELY call record_candidate_response with all details
-5. Continue conversation naturally
-6. Repeat for EVERY exchange
-
-## EXAMPLE CONVERSATION WITH RECORDING:
-You: "Can you tell me your name and background?"
-[Candidate responds: "Hi, I'm John. I'm a software developer with 3 years experience..."]
-→ IMMEDIATELY call get_real_time_progress
-→ IMMEDIATELY call record_candidate_response:
-  - session_id: (from get_real_time_progress)
-  - question: "Can you tell me your name and background?"
-  - response: "Hi, I'm John. I'm a software developer with 3 years experience..."
-  - response_duration: 15.0
-
-You: "That's great! What programming languages do you work with?"
-[Candidate responds: "I primarily work with Python and JavaScript..."]
-→ IMMEDIATELY call get_real_time_progress
-→ IMMEDIATELY call record_candidate_response:
-  - session_id: (from get_real_time_progress)  
-  - question: "What programming languages do you work with?"
-  - response: "I primarily work with Python and JavaScript..."
-  - response_duration: 12.0
-
-Continue this pattern for EVERY exchange!
-
-## CONVERSATION STYLE
-- Be warm, professional, and engaging
-- Ask clear, specific questions
-- Keep your responses brief (30-50 words)
-- Build naturally on their answers
-- Show genuine interest
+# NATURAL CONVERSATION STYLE
+- Be warm, professional, and genuinely interested
 - Ask follow-up questions based on their responses
+- Keep responses conversational but focused (30-50 words)
+- Show engagement: "That's interesting," "Tell me more about," "How did you handle"
+- Use natural transitions between topics
+- Ask one question at a time and listen actively
 
-## INTERVIEW FLOW STRUCTURE
-1. **Introduction**: Name, background, current role
-2. **Experience**: Previous work, projects, achievements  
-3. **Technical Skills**: Programming languages, frameworks, tools
-4. **Projects**: Specific examples, challenges, solutions
-5. **Behavioral**: Problem-solving, teamwork, communication
-6. **Goals**: Career aspirations, why this role
+# INTELLIGENT INTERVIEW FLOW
+- Start with background and experience
+- Explore their technical skills naturally
+- Discuss specific projects they mention
+- Ask behavioral questions about challenges and teamwork
+- Adapt questions based on their responses
+- End with career goals and questions for you
 
-## 🚨 RECORDING REQUIREMENTS 🚨
-- Record EVERY meaningful exchange (not just greetings)
-- Use get_real_time_progress before each record_candidate_response
-- Include complete question and response text
-- Estimate response duration in seconds
-- This creates the database records for evaluation
+# RESPONSE GUIDELINES
+- Keep responses natural and engaging (not too short, not too long)
+- Show genuine curiosity about their answers
+- Use encouraging phrases: "That sounds challenging," "Great example"
+- Build on what they say rather than following a script
+- Maintain professional but friendly tone throughout
+- Ask clarifying questions when needed
 
-## CRITICAL SUCCESS FACTORS
-✅ ALWAYS call get_real_time_progress before recording
-✅ ALWAYS call record_candidate_response after each response
-✅ Record complete questions and responses
-✅ Maintain natural conversation flow
-✅ This ensures automatic evaluation and scoring
-
-Remember: Your primary job is to conduct a natural interview while AUTOMATICALLY RECORDING every exchange for evaluation!
+# ENHANCED SPEED & INTELLIGENCE
+- FAST real-time conversation (no blocking operations)
+- Comprehensive evaluation runs in background
+- Natural dialogue prioritized over data collection
+- Advanced reporting available post-interview
+- Non-blocking AI-powered question generation
+- Background scoring and analysis system
 """
 
 # DATABASE HELPER
@@ -199,14 +144,13 @@ class InterviewAgent(Agent):
                 temperature=0.4,  # BALANCED: Natural conversation but faster than 0.7
             ),
             tools=[
-                start_interview_session,           # Initialize session (fast)
-                ask_interview_question,            # Generate questions (optimized)
-                record_candidate_response,         # Record + AUTOMATED evaluation
-                get_real_time_progress,            # Real-time metrics and progress
-                end_interview_session,             # Complete session (fast)
-                get_quick_feedback,                # Instant feedback
-                get_automated_evaluation_summary,  # AUTOMATED evaluation results
-                get_interview_report,              # Comprehensive report (background-processed)
+                start_interview_session,     # Initialize session (fast)
+                ask_interview_question,      # Generate questions (optimized)
+                record_candidate_response,   # Record + background evaluation
+                get_live_interview_status,   # Real-time status (from memory)
+                end_interview_session,       # Complete session (fast)
+                get_quick_feedback,          # Instant feedback
+                get_interview_report,        # Comprehensive report (background-processed)
             ],
         )
         print("✅ ENHANCED_AGENT: Fast non-blocking agent initialized!")
@@ -225,119 +169,26 @@ class InterviewAgent(Agent):
     
     async def on_enter(self) -> None:
         """Called when the task is entered"""
-        logger.info("🎬 ENHANCED_AGENT: on_enter() called - Starting enhanced session")
         print("🎬 ENHANCED_AGENT: on_enter() called - Starting enhanced session")
         await super().on_enter()
-        
-        # Auto-detect and start interview session based on room context
-        try:
-            # Get room name from the context or session
-            room_name = None
-            
-            # Try multiple ways to get the room name
-            if hasattr(self, '_ctx') and self._ctx and hasattr(self._ctx, 'room'):
-                room_name = self._ctx.room.name
-                logger.info(f"🏠 ENHANCED_AGENT: Room from _ctx: {room_name}")
-            elif hasattr(self, 'session') and hasattr(self.session, 'room'):
-                room_name = self.session.room.name
-                logger.info(f"🏠 ENHANCED_AGENT: Room from session: {room_name}")
-            elif hasattr(self, '_room'):
-                room_name = self._room.name
-                logger.info(f"🏠 ENHANCED_AGENT: Room from _room: {room_name}")
-            
-            logger.info(f"🏠 ENHANCED_AGENT: Room detected: {room_name}")
-            
-            if room_name:
-                logger.info(f"🤖 ENHANCED_AGENT: Auto-starting session for room: {room_name}")
-                print(f"🤖 ENHANCED_AGENT: Auto-starting session for room: {room_name}")
-                
-                # Use the room name as session ID for tracking
-                session_result = await start_interview_session(
-                    context=None,  # Will be handled internally
-                    candidate_name="Interview Candidate",
-                    position="Applied Position",
-                    session_id=room_name
-                )
-                logger.info(f"✅ ENHANCED_AGENT: Auto-session started successfully")
-                logger.info(f"📊 Session result: {session_result[:100]}...")
-                print(f"✅ ENHANCED_AGENT: Auto-session started: {session_result}")
-            else:
-                logger.warning(f"⚠️ ENHANCED_AGENT: No room name detected for auto-session")
-                # Fallback: Create a session with timestamp
-                from datetime import datetime
-                fallback_session_id = f"interview_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                logger.info(f"🔄 ENHANCED_AGENT: Creating fallback session: {fallback_session_id}")
-                print(f"🔄 ENHANCED_AGENT: Creating fallback session: {fallback_session_id}")
-                
-                session_result = await start_interview_session(
-                    context=None,
-                    candidate_name="Interview Candidate",
-                    position="Applied Position",
-                    session_id=fallback_session_id
-                )
-                logger.info(f"✅ ENHANCED_AGENT: Fallback session created: {session_result}")
-                print(f"✅ ENHANCED_AGENT: Fallback session created")
-                
-        except Exception as e:
-            logger.error(f"❌ ENHANCED_AGENT: Could not auto-start session: {e}")
-            print(f"⚠️ ENHANCED_AGENT: Could not auto-start session: {e}")
-        
-        logger.info("✅ ENHANCED_AGENT: on_enter() completed - Ready for intelligent interview")
         print("✅ ENHANCED_AGENT: on_enter() completed - Ready for intelligent interview")
     
     async def on_exit(self) -> None:
         """Called when the task is exited"""
-        logger.info("🎬 ENHANCED_AGENT: on_exit() called - Ending enhanced session")
         print("🎬 ENHANCED_AGENT: on_exit() called - Ending enhanced session")
-        
-        # Try to end any active sessions
-        try:
-            # Get room name using multiple fallback methods
-            room_name = None
-            
-            if hasattr(self, '_ctx') and self._ctx and hasattr(self._ctx, 'room'):
-                room_name = self._ctx.room.name
-            elif hasattr(self, 'session') and hasattr(self.session, 'room'):
-                room_name = self.session.room.name
-            elif hasattr(self, '_room'):
-                room_name = self._room.name
-            
-            if room_name:
-                logger.info(f"🏁 ENHANCED_AGENT: Ending session for room: {room_name}")
-                result = await end_interview_session(context=None, session_id=room_name)
-                logger.info(f"✅ ENHANCED_AGENT: Session ended successfully")
-                logger.info(f"📊 End result: {result[:100]}...")
-            else:
-                logger.warning(f"⚠️ ENHANCED_AGENT: No room name for session end")
-        except Exception as e:
-            logger.error(f"❌ ENHANCED_AGENT: Error ending session: {e}")
-        
         await super().on_exit()
-        logger.info("✅ ENHANCED_AGENT: on_exit() completed")
         print("✅ ENHANCED_AGENT: on_exit() completed")
     
     async def on_user_turn_completed(self, turn_ctx, new_message) -> None:
         """Called when the user has finished speaking"""
-        logger.info(f"🎤 ENHANCED_AGENT: on_user_turn_completed() - Enhanced processing")
-        logger.info(f"📝 ENHANCED_AGENT: Message length: {len(new_message.content)} chars")
-        logger.info(f"📄 ENHANCED_AGENT: Message content: {new_message.content[:100]}...")
-        
         print(f"🎤 ENHANCED_AGENT: on_user_turn_completed() - Enhanced processing")
         print(f"📝 ENHANCED_AGENT: Message length: {len(new_message.content)} chars")
-        
         await super().on_user_turn_completed(turn_ctx, new_message)
-        
-        logger.info("⚡ ENHANCED_AGENT: Turn processed with background evaluation")
         print("⚡ ENHANCED_AGENT: Turn processed with background evaluation")
 
 # ENTRYPOINT FUNCTION
 async def entrypoint(ctx: agents.JobContext):
     """LiveKit Agent Entry Point - Enhanced Fast Non-Blocking Implementation"""
-    
-    logger.info("🎯 ENTRYPOINT: Starting Enhanced LiveKit agent session...")
-    logger.info(f"📋 ENTRYPOINT: Job ID: {ctx.job.id}")
-    logger.info(f"📋 ENTRYPOINT: Room Name: {ctx.room.name}")
-    logger.info(f"📋 ENTRYPOINT: Worker ID: {ctx.worker_id}")
     
     print("🎯 ENTRYPOINT: Starting Enhanced LiveKit agent session...")
     print(f"📋 ENTRYPOINT: Job ID: {ctx.job.id}")
@@ -346,24 +197,17 @@ async def entrypoint(ctx: agents.JobContext):
     
     try:
         # Check room state before connecting
-        logger.info(f"🔍 ENTRYPOINT: Room state before connect - Name: {ctx.room.name}")
-        logger.info(f"🔍 ENTRYPOINT: Room participants before connect: {len(ctx.room.remote_participants)}")
-        
         print(f"🔍 ENTRYPOINT: Room state before connect - Name: {ctx.room.name}")
         print(f"🔍 ENTRYPOINT: Room participants before connect: {len(ctx.room.remote_participants)}")
         for pid, participant in ctx.room.remote_participants.items():
-            logger.info(f"  👤 Existing participant: {participant.identity} (ID: {pid})")
             print(f"  👤 Existing participant: {participant.identity} (ID: {pid})")
         
         # Connect to the LiveKit room first
-        logger.info("🔗 ENTRYPOINT: Attempting to connect to room...")
         print("🔗 ENTRYPOINT: Attempting to connect to room...")
         await ctx.connect()
-        logger.info("✅ ENTRYPOINT: Connected to room successfully")
         print("✅ ENTRYPOINT: Connected to room successfully")
         
         # Check room state after connecting
-        logger.info(f"🔍 ENTRYPOINT: Room state after connect - Name: {ctx.room.name}")
         print(f"🔍 ENTRYPOINT: Room state after connect - Name: {ctx.room.name}")
         print(f"🔍 ENTRYPOINT: Room participants after connect: {len(ctx.room.remote_participants)}")
         for pid, participant in ctx.room.remote_participants.items():
@@ -397,11 +241,6 @@ async def entrypoint(ctx: agents.JobContext):
         # Create the enhanced interview agent
         print("🤖 ENTRYPOINT: Creating Enhanced InterviewAgent with tools and instructions...")
         interview_agent = InterviewAgent()
-        
-        # Store room context in the agent for access during lifecycle
-        interview_agent._ctx = ctx
-        interview_agent._room = ctx.room
-        
         print("✅ ENTRYPOINT: Enhanced InterviewAgent created successfully")
         
         # CORRECT LIVEKIT PATTERN: Create AgentSession and start it

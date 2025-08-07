@@ -1,0 +1,29 @@
+# Fast Non-Blocking Interview System Requirements
+# Core LiveKit dependencies
+livekit>=0.15.0
+livekit-agents>=0.8.0
+livekit-plugins-google>=0.5.0
+
+# AI and ML dependencies
+google-generativeai>=0.8.0
+
+# Data processing and storage
+aiofiles>=24.1.0
+asyncio-throttle>=1.0.2
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# Development and testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# Optional performance enhancements
+uvloop>=0.19.0  # Better async loop for Linux/Mac
+psutil>=5.9.0   # System monitoring
+memory-profiler>=0.61.0  # Memory usage tracking
+
+# Database (SQLite is built-in to Python)
+# For production, consider:
+# postgresql-asyncio>=0.5.0
+# asyncpg>=0.29.0
