@@ -4,11 +4,22 @@ Real-time conversation with background comprehensive evaluation
 """
 
 from dotenv import load_dotenv
+import os
+
+# Load local environment configuration
+load_dotenv('config/.env')
+
+print("🏠 LOCAL AI INTERVIEW AGENT STARTING")
+print("=" * 50)
+print(f"🔗 LiveKit URL: {os.getenv('LIVEKIT_URL')}")
+print(f"🔑 API Key: {os.getenv('LIVEKIT_API_KEY')}")
+print(f"🤖 Google AI: {'✅ Configured' if os.getenv('GOOGLE_API_KEY') else '❌ Missing'}")
+print("=" * 50)
+
 from livekit import agents
 from livekit.agents import Agent, AgentSession, RoomInputOptions, function_tool, RunContext
 from livekit.plugins import noise_cancellation, google
 import google.generativeai as genai
-import os
 import json
 import sqlite3
 import logging

@@ -1,0 +1,27 @@
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+    environment:
+      - "LIVEKIT_KEYS=devkey: secret"
+    command: --config /etc/livekit.yaml --dev
+    volumes:
+      - ./config/livekit.yaml:/etc/livekit.yaml
+    restart: unless-stopped
+    networks:
+      - livekit-network
+
+  # Optional: Redis for production-like setup
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - livekit-network
+
+networks:
+  livekit-network:
+    driver: bridge

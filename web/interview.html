@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Room - Local</title>
+    <script src="https://unpkg.com/livekit-client@2.5.7/dist/livekit-client.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        
+        .video-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .video-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 250px;
+        }
+        
+        .video-element {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 10px;
+            background: #000;
+            object-fit: cover;
+        }
+        
+        .video-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border: 2px dashed rgba(255,255,255,0.3);
+        }
+        
+        .controls-panel {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .control-btn {
+            margin: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+        
+        .mic-btn { background: #28a745; color: white; }
+        .mic-btn.muted { background: #dc3545; }
+        .camera-btn { background: #007bff; color: white; }
+        .camera-btn.off { background: #6c757d; }
+        .end-btn { background: #dc3545; color: white; }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .info-panel {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .status-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+        .status-connecting { background: #ffc107; animation: pulse 1s infinite; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .transcript-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        
+        .transcript-entry {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .speaker-ai { border-left: 3px solid #007bff; }
+        .speaker-candidate { border-left: 3px solid #28a745; }
+        
+        .tips-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .tips-section h4 {
+            margin-bottom: 0.5rem;
+            color: #ffc107;
+        }
+        
+        .tips-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .tips-section li {
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+        
+        .tips-section li:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .info-panel {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 AI Interview Session</h1>
+        <p>Local Development Environment | Secure & Private</p>
+    </div>
+    
+    <div class="main-container">
+        <div class="video-section">
+            <div class="video-container">
+                <div id="localVideoContainer">
+                    <div class="video-placeholder">
+                        <h3>👤 Your Video</h3>
+                        <p>Camera will appear here</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="video-container">
+                <div id="remoteVideoContainer">
+                    <div class="video-placeholder">
+                        <h3>🤖 AI Interviewer</h3>
+                        <p>Voice-only interview</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls-panel">
+                <button id="micBtn" class="control-btn mic-btn">🎤 Microphone</button>
+                <button id="cameraBtn" class="control-btn camera-btn">📹 Camera</button>
+                <button id="endBtn" class="control-btn end-btn">🔚 End Interview</button>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="status-card">
+                <h3>📊 Connection Status</h3>
+                <div id="connectionStatus">
+                    <span class="status-indicator status-connecting"></span>
+                    <span>Connecting to AI interviewer...</span>
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+                    Room: <span id="roomName">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="status-card">
+                <h3>ℹ️ Session Info</h3>
+                <div><strong>Candidate:</strong> <span id="candidateName">Loading...</span></div>
+                <div><strong>Position:</strong> <span id="positionName">Loading...</span></div>
+                <div><strong>Started:</strong> <span id="startTime">Loading...</span></div>
+            </div>
+            
+            <div class="transcript-section">
+                <h4>💬 Interview Transcript</h4>
+                <div id="transcriptContent">
+                    <div class="transcript-entry speaker-ai">
+                        <strong>AI Interviewer:</strong> Waiting for connection...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tips-section">
+                <h4>📝 Interview Tips</h4>
+                <ul>
+                    <li>Speak clearly and at a moderate pace</li>
+                    <li>Look at the camera when speaking</li>
+                    <li>Take your time to think before answering</li>
+                    <li>Provide specific examples in your responses</li>
+                    <li>Ask questions if you need clarification</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomName = urlParams.get('room') || 'interview_demo';
+        const candidateName = urlParams.get('name') || 'Interview Candidate';
+        const positionName = urlParams.get('position') || 'Software Developer';
+        
+        // Update UI with session info
+        document.getElementById('roomName').textContent = roomName;
+        document.getElementById('candidateName').textContent = candidateName;
+        document.getElementById('positionName').textContent = positionName;
+        document.getElementById('startTime').textContent = new Date().toLocaleTimeString();
+        
+        // LiveKit room and tracks
+        let room;
+        let localAudioTrack;
+        let localVideoTrack;
+        let isMicMuted = false;
+        let isCameraOff = false;
+        
+        // Simple token generation for demo (in production, this should be server-side)
+        function generateSimpleToken() {
+            const payload = {
+                room: roomName,
+                identity: 'candidate_' + Math.random().toString(36).substr(2, 8),
+                name: candidateName,
+                exp: Math.floor(Date.now() / 1000) + (6 * 60 * 60) // 6 hours
+            };
+            
+            // For demo purposes, we'll use the room name as token
+            // In production, use proper JWT token generation
+            return btoa(JSON.stringify(payload));
+        }
+        
+        async function connectToRoom() {
+            try {
+                updateConnectionStatus('connecting', 'Connecting to LiveKit server...');
+                
+                room = new LiveKit.Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                });
+                
+                // Set up event listeners
+                room.on(LiveKit.RoomEvent.Connected, () => {
+                    updateConnectionStatus('online', 'Connected to AI interviewer');
+                    addTranscriptEntry('ai', 'Hello! I\'m your AI interviewer. Let\'s begin with introductions.');
+                });
+                
+                room.on(LiveKit.RoomEvent.Disconnected, () => {
+                    updateConnectionStatus('offline', 'Disconnected from interview');
+                });
+                
+                room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                    if (track.kind === LiveKit.Track.Kind.Video) {
+                        const videoElement = document.createElement('video');
+                        videoElement.className = 'video-element';
+                        videoElement.autoplay = true;
+                        track.attach(videoElement);
+                        
+                        const container = document.getElementById('remoteVideoContainer');
+                        container.innerHTML = '';
+                        container.appendChild(videoElement);
+                    }
+                });
+                
+                room.on(LiveKit.RoomEvent.DataReceived, (payload, participant) => {
+                    try {
+                        const data = JSON.parse(new TextDecoder().decode(payload));
+                        if (data.type === 'transcript') {
+                            addTranscriptEntry(data.speaker, data.message);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing data:', e);
+                    }
+                });
+                
+                // Generate token and connect
+                const token = generateSimpleToken();
+                await room.connect('ws://localhost:7880', token);
+                
+                // Enable audio by default
+                await enableMicrophone();
+                
+            } catch (error) {
+                console.error('Connection failed:', error);
+                updateConnectionStatus('offline', `Connection failed: ${error.message}`);
+                
+                // Show helpful error message
+                addTranscriptEntry('system', 'Connection failed. Please ensure LiveKit server is running on localhost:7880');
+            }
+        }
+        
+        async function enableMicrophone() {
+            try {
+                if (!localAudioTrack) {
+                    localAudioTrack = await LiveKit.createLocalAudioTrack();
+                    await room.localParticipant.publishTrack(localAudioTrack);
+                }
+                localAudioTrack.unmute();
+                isMicMuted = false;
+                updateMicButton();
+            } catch (error) {
+                console.error('Failed to enable microphone:', error);
+            }
+        }
+        
+        async function enableCamera() {
+            try {
+                if (!localVideoTrack) {
+                    localVideoTrack = await LiveKit.createLocalVideoTrack();
+                    await room.localParticipant.publishTrack(localVideoTrack);
+                    
+                    const videoElement = document.createElement('video');
+                    videoElement.className = 'video-element';
+                    videoElement.autoplay = true;
+                    videoElement.muted = true;
+                    localVideoTrack.attach(videoElement);
+                    
+                    const container = document.getElementById('localVideoContainer');
+                    container.innerHTML = '';
+                    container.appendChild(videoElement);
+                }
+                isCameraOff = false;
+                updateCameraButton();
+            } catch (error) {
+                console.error('Failed to enable camera:', error);
+            }
+        }
+        
+        function updateConnectionStatus(status, message) {
+            const statusEl = document.getElementById('connectionStatus');
+            const indicator = statusEl.querySelector('.status-indicator');
+            const text = statusEl.querySelector('span:last-child') || statusEl;
+            
+            indicator.className = `status-indicator status-${status}`;
+            text.textContent = message;
+        }
+        
+        function addTranscriptEntry(speaker, message) {
+            const transcript = document.getElementById('transcriptContent');
+            const entry = document.createElement('div');
+            entry.className = `transcript-entry speaker-${speaker}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const speakerName = speaker === 'ai' ? 'AI Interviewer' : 
+                              speaker === 'candidate' ? candidateName : 'System';
+            
+            entry.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <strong>${speakerName}:</strong>
+                    <small style="opacity: 0.7;">${timestamp}</small>
+                </div>
+                <div>${message}</div>
+            `;
+            
+            transcript.appendChild(entry);
+            transcript.scrollTop = transcript.scrollHeight;
+        }
+        
+        function updateMicButton() {
+            const btn = document.getElementById('micBtn');
+            if (isMicMuted) {
+                btn.className = 'control-btn mic-btn muted';
+                btn.textContent = '🔇 Muted';
+            } else {
+                btn.className = 'control-btn mic-btn';
+                btn.textContent = '🎤 Microphone';
+            }
+        }
+        
+        function updateCameraButton() {
+            const btn = document.getElementById('cameraBtn');
+            if (isCameraOff) {
+                btn.className = 'control-btn camera-btn off';
+                btn.textContent = '📹 Camera Off';
+            } else {
+                btn.className = 'control-btn camera-btn';
+                btn.textContent = '📹 Camera On';
+            }
+        }
+        
+        // Control button handlers
+        document.getElementById('micBtn').onclick = async () => {
+            if (localAudioTrack) {
+                if (isMicMuted) {
+                    localAudioTrack.unmute();
+                    isMicMuted = false;
+                } else {
+                    localAudioTrack.mute();
+                    isMicMuted = true;
+                }
+                updateMicButton();
+            } else {
+                await enableMicrophone();
+            }
+        };
+        
+        document.getElementById('cameraBtn').onclick = async () => {
+            if (localVideoTrack) {
+                if (isCameraOff) {
+                    await enableCamera();
+                } else {
+                    localVideoTrack.stop();
+                    await room.localParticipant.unpublishTrack(localVideoTrack);
+                    localVideoTrack = null;
+                    isCameraOff = true;
+                    
+                    const container = document.getElementById('localVideoContainer');
+                    container.innerHTML = '<div class="video-placeholder"><h3>👤 Your Video</h3><p>Camera disabled</p></div>';
+                    updateCameraButton();
+                }
+            } else {
+                await enableCamera();
+            }
+        };
+        
+        document.getElementById('endBtn').onclick = () => {
+            if (room) {
+                room.disconnect();
+            }
+            addTranscriptEntry('system', 'Interview ended. Thank you for your time!');
+            setTimeout(() => {
+                window.close();
+            }, 2000);
+        };
+        
+        // Initialize connection
+        window.onload = () => {
+            connectToRoom();
+        };
+    </script>
+</body>
+</html>
