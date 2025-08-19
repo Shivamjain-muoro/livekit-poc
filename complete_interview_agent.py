@@ -552,9 +552,4 @@ if __name__ == "__main__":
     print("🚀 Starting enhanced fast agent...")
     
     # Run the LiveKit agent using the CLI with agent identity
-    worker_options = agents.WorkerOptions(
-        entrypoint_fnc=entrypoint,
-        participant_identity="muoro-ai-interviewer-v0-3-1",
-        participant_name="Muoro AI interviewer v0.3.1"
-    )
-    agents.cli.run_app(worker_options)
+    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
