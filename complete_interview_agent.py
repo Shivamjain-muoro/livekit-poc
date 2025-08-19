@@ -9,7 +9,7 @@ import os
 # Load local environment configuration
 load_dotenv('config/.env')
 
-print("🏠 LOCAL AI INTERVIEW AGENT STARTING")
+print("🏠 MUORO AI INTERVIEWER V0.3.1 STARTING")
 print("=" * 50)
 print(f"🔗 LiveKit URL: {os.getenv('LIVEKIT_URL')}")
 print(f"🔑 API Key: {os.getenv('LIVEKIT_API_KEY')}")
@@ -70,7 +70,7 @@ logger = logging.getLogger('InterviewAgent')
 INTERVIEWER_INSTRUCTION = """
 # REAL-TIME AI INTERVIEWER - NATURAL CONVERSATION WITH AUTOMATIC RECORDING
 
-You are a professional AI interviewer with ONE CRITICAL REQUIREMENT: RECORD EVERY CONVERSATION EXCHANGE.
+You are Muoro AI interviewer v0.3.1, a professional AI interviewer with ONE CRITICAL REQUIREMENT: RECORD EVERY CONVERSATION EXCHANGE.
 
 ## 🚨 CRITICAL: CONVERSATION RECORDING PROTOCOL 🚨
 After EVERY substantive response from the candidate, you MUST:
@@ -85,7 +85,7 @@ THIS IS MANDATORY - NO EXCEPTIONS!
 
 ## IMMEDIATE START PROTOCOL
 When a candidate joins, start with:
-"Hello! I'm your AI interviewer today. Let's begin. Can you tell me your name and a bit about your background?"
+"Hello! I'm your AI interviewer for today's session. Let's begin. Can you tell me your name and a bit about your background?"
 
 ## CONVERSATION RECORDING WORKFLOW
 1. Ask a question
@@ -369,9 +369,40 @@ async def entrypoint(ctx: agents.JobContext):
         # Connect to the LiveKit room first
         logger.info("🔗 ENTRYPOINT: Attempting to connect to room...")
         print("🔗 ENTRYPOINT: Attempting to connect to room...")
-        await ctx.connect()
-        logger.info("✅ ENTRYPOINT: Connected to room successfully")
-        print("✅ ENTRYPOINT: Connected to room successfully")
+        
+        # Try to connect with custom participant info
+        try:
+            # Use ctx.connect with custom options
+            await ctx.connect()
+            logger.info("✅ ENTRYPOINT: Connected to room successfully")
+            print("✅ ENTRYPOINT: Connected to room successfully")
+            
+            # Set the agent name immediately after connection
+            print("🏷️ ENTRYPOINT: Setting agent participant name...")
+            if ctx.room.local_participant:
+                # Update local participant name and metadata using correct methods
+                try:
+                    await ctx.room.local_participant.set_name("Muoro AI interviewer v0.3.1")
+                    print("✅ ENTRYPOINT: Agent name set to 'Muoro AI interviewer v0.3.1'")
+                except AttributeError:
+                    # Try alternative method
+                    try:
+                        await ctx.room.local_participant.update_attributes({"name": "Muoro AI interviewer v0.3.1"})
+                        print("✅ ENTRYPOINT: Agent name set via attributes")
+                    except AttributeError:
+                        print("⚠️ ENTRYPOINT: Could not set agent name - using default")
+                
+                # Try to set metadata
+                try:
+                    await ctx.room.local_participant.set_metadata('{"type": "ai_interviewer", "version": "v0.3.1", "role": "interviewer"}')
+                    print("✅ ENTRYPOINT: Agent metadata set successfully")
+                except AttributeError:
+                    print("⚠️ ENTRYPOINT: Could not set metadata - using default")
+        except Exception as connect_error:
+            print(f"❌ ENTRYPOINT: Connection error: {connect_error}")
+            # Try alternative connection method without custom name
+            await ctx.connect()
+            print("✅ ENTRYPOINT: Connected with default settings")
         
         # Check room state after connecting
         logger.info(f"🔍 ENTRYPOINT: Room state after connect - Name: {ctx.room.name}")
@@ -414,7 +445,7 @@ async def entrypoint(ctx: agents.JobContext):
         interview_agent._room = ctx.room
         
         print("✅ ENTRYPOINT: Enhanced InterviewAgent created successfully")
-        
+
         # CORRECT LIVEKIT PATTERN: Create AgentSession and start it
         print("🚀 ENTRYPOINT: Creating AgentSession...")
         
@@ -440,7 +471,7 @@ async def entrypoint(ctx: agents.JobContext):
         
         # Keep the session alive by monitoring room events
         print("🔄 ENTRYPOINT: Monitoring room for participants...")
-        print("🔄 ENTRYPOINT: Agent will stay active as long as participants are in the room")
+        print("� ENTRYPOINT: Agent will stay active as long as participants are in the room")
         
         # Monitor room state continuously
         check_count = 0
@@ -456,7 +487,7 @@ async def entrypoint(ctx: agents.JobContext):
             # Log participant details every few checks
             if check_count % 6 == 1:  # Every 30 seconds (5s * 6)
                 for p in participants:
-                    print(f"  👤 Active participant: {p.identity} - SID: {p.sid}")
+                    print(f"  � Active participant: {p.identity} - SID: {p.sid}")
                     print(f"  📊 Participant tracks: {len(p.track_publications)} published")
                     print(f"  🔗 Participant kind: {p.kind}")
             
@@ -494,7 +525,7 @@ if __name__ == "__main__":
     """
     Run the Enhanced Fast Non-Blocking LiveKit Interview Agent
     """
-    print("🎙️ Starting ENHANCED FAST NON-BLOCKING LiveKit Interview Agent")
+    print("🎙️ Starting MUORO AI INTERVIEWER V0.3.1")
     print("=" * 70)
     print("✅ Uses LiveKit Agents framework with Google Gemini Realtime")
     print("✅ Real-time voice processing via LiveKit")
@@ -520,5 +551,10 @@ if __name__ == "__main__":
     print("")
     print("🚀 Starting enhanced fast agent...")
     
-    # Run the LiveKit agent using the CLI
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
+    # Run the LiveKit agent using the CLI with agent identity
+    worker_options = agents.WorkerOptions(
+        entrypoint_fnc=entrypoint,
+        participant_identity="muoro-ai-interviewer-v0-3-1",
+        participant_name="Muoro AI interviewer v0.3.1"
+    )
+    agents.cli.run_app(worker_options)
