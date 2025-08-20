@@ -18,7 +18,7 @@ print("=" * 50)
 
 from livekit import agents
 from livekit.agents import Agent, AgentSession, RoomInputOptions, function_tool, RunContext
-from livekit.plugins import noise_cancellation, google
+from livekit.plugins import google
 import google.generativeai as genai
 import json
 import sqlite3
@@ -56,12 +56,52 @@ else:
 # Configure detailed logging for interview agent
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[
-        logging.FileHandler('interview_detailed.log'),
+        logging.FileHandler('interview_detailed.log', mode='a', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
+
+# Ensure root logger captures everything
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+# Configure specific loggers
+loggers_config = {
+    'websockets.client': logging.WARNING,
+    'websockets.protocol': logging.WARNING,
+    'websockets': logging.WARNING,
+    'google.generativeai.types': logging.WARNING,
+    'livekit.plugins': logging.INFO,
+    'livekit.rtc': logging.INFO,
+    'InterviewAgent': logging.INFO,
+    'fast_interview_tools': logging.INFO
+}
+
+for logger_name, level in loggers_config.items():
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(level)
+    # Ensure the logger propagates to root
+    logger.propagate = True
+
+# Create a custom filter to exclude only specific websocket logs
+class WebsocketMediaFilter(logging.Filter):
+    def filter(self, record):
+        msg = str(record.msg).lower()
+        # Only filter out media chunks and realtime input logs
+        if any(phrase in msg for phrase in ['mediachunks', 'realtime_input', 'heartbeat']):
+            return False
+        # Keep all other logs
+        return True
+
+# Apply the filter only to the specific loggers that need it
+websocket_loggers = ['websockets.client', 'websockets.protocol', 'websockets']
+for logger_name in websocket_loggers:
+    logger = logging.getLogger(logger_name)
+    for handler in logger.handlers:
+        handler.addFilter(WebsocketMediaFilter())
 
 # Create logger for this module
 logger = logging.getLogger('InterviewAgent')

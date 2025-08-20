@@ -12,7 +12,14 @@ import google.generativeai as genai
 import os
 import logging
 
+# Configure module logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Ensure all handlers use the same format
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+for handler in logger.handlers:
+    handler.setFormatter(formatter)
 
 # Global session data (in-memory for speed)
 ACTIVE_SESSIONS = {}
@@ -64,10 +71,14 @@ async def ask_interview_question(
     """
     Generate and ask next interview question - OPTIMIZED for speed
     """
-    print(f"🎯 FAST_TOOL: ask_interview_question - Session: {session_id}")
+    logger.info("="*50)
+    logger.info("🎯 QUESTION_GENERATION: Starting question generation process")
+    logger.info(f"📝 Session ID: {session_id}")
+    logger.info(f"🔄 Question Type: {question_type}")
     
     session = ACTIVE_SESSIONS.get(session_id)
     if not session:
+        logger.error("❌ QUESTION_GENERATION: Session not found")
         return json.dumps({"error": "Session not found"})
     
     try:
@@ -81,10 +92,14 @@ async def ask_interview_question(
                 question = await _generate_opening_question(session)
             else:
                 # All subsequent questions are AI-generated based on conversation
+                logger.info("🤖 QUESTION_GENERATION: Using AI to generate adaptive technical question")
                 question = await _generate_adaptive_technical_question(session)
+                logger.info("✅ QUESTION_GENERATION: AI question generated successfully")
         else:
             # Fallback only if no API key (should rarely happen)
+            logger.warning("⚠️ QUESTION_GENERATION: No Google API key found, using fallback questions")
             question = _get_fallback_question(questions_asked, session)
+            logger.info("ℹ️ QUESTION_GENERATION: Using fallback question system")
         
         # Store question in session (fast memory operation)
         session["questions_asked"].append({
@@ -98,10 +113,17 @@ async def ask_interview_question(
             "question": question,
             "question_number": questions_asked + 1,
             "session_id": session_id,
-            "status": "question_ready"
+            "status": "question_ready",
+            "generation_method": "ai" if os.getenv("GOOGLE_API_KEY") else "fallback",
+            "ai_enabled": bool(os.getenv("GOOGLE_API_KEY"))
         }
         
-        print(f"✅ FAST_TOOL: Generated question #{questions_asked + 1} quickly")
+        logger.info("="*50)
+        logger.info(f"✅ QUESTION_GENERATION: Question #{questions_asked + 1} generated")
+        logger.info(f"🤖 Generation Method: {'AI (Gemini 1.5)' if os.getenv('GOOGLE_API_KEY') else 'Fallback System'}")
+        logger.info(f"💭 Question: {question}")
+        logger.info("="*50)
+        
         return json.dumps(result)
         
     except Exception as e:
@@ -151,12 +173,18 @@ Just return the question, no extra text."""
 async def _generate_adaptive_technical_question(session):
     """Generate deep technical follow-up questions based on candidate responses"""
     try:
+        logger.info("🤖 AI_QUESTION: Starting technical question generation...")
+        logger.info(f"🎯 AI_QUESTION: Using Google Gemini 1.5 Flash model")
+        
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Get all previous Q&A pairs
         questions_asked = session.get("questions_asked", [])
         responses_received = session.get("responses_received", [])
         question_count = len(questions_asked)
+        
+        logger.info(f"📊 AI_QUESTION: Context - {question_count} previous questions")
+        logger.info(f"👤 AI_QUESTION: Role being interviewed: {session.get('position', 'Unknown')}")
         
         conversation_context = ""
         for i, q in enumerate(questions_asked):

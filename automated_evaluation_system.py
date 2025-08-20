@@ -15,8 +15,30 @@ import google.generativeai as genai
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Create formatter for evaluation system
+formatter = logging.Formatter('%(asctime)s - 🤖 %(levelname)s - %(message)s')
+
+# Add file handler for evaluation logs
+eval_handler = logging.FileHandler('evaluation.log')
+eval_handler.setFormatter(formatter)
+eval_handler.setLevel(logging.INFO)
+logger.addHandler(eval_handler)
+
+# Add console handler for important messages
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+console_handler.setLevel(logging.INFO)
+logger.addHandler(console_handler)
+
+# Filter out debug logs for media chunks
+class MediaChunkFilter(logging.Filter):
+    def filter(self, record):
+        return 'mediaChunks' not in str(record.msg)
+
+logger.addFilter(MediaChunkFilter())
 
 class AutomatedEvaluationSystem:
     def __init__(self, google_api_key):
@@ -346,24 +368,45 @@ class AutomatedEvaluationSystem:
                     technical_score = (avg_correctness + avg_completeness + avg_skill_relevance) / 3
                     communication_score = (avg_clarity + avg_fluency + avg_confidence) / 3
                     
-                    # Update session statistics
-                    conn.execute("""
-                        UPDATE interview_sessions SET
-                            overall_score = ?,
-                            technical_score = ?,
-                            communication_score = ?,
-                            total_questions = ?,
-                            updated_at = ?
-                        WHERE session_id = ?
-                    """, (
-                        avg_overall,
-                        technical_score,
-                        communication_score,
-                        exchange_count,
-                        datetime.now().isoformat(),
-                        session_id
-                    ))
-                    conn.commit()
+                    # Update session statistics with graceful column handling
+                    try:
+                        conn.execute("""
+                            UPDATE interview_sessions SET
+                                overall_score = ?,
+                                technical_score = ?,
+                                communication_score = ?,
+                                total_questions = ?,
+                                updated_at = ?
+                            WHERE session_id = ?
+                        """, (
+                            avg_overall,
+                            technical_score,
+                            communication_score,
+                            exchange_count,
+                            datetime.now().isoformat(),
+                            session_id
+                        ))
+                        conn.commit()
+                    except sqlite3.OperationalError as e:
+                        if "no such column" in str(e):
+                            # Fallback update without updated_at
+                            conn.execute("""
+                                UPDATE interview_sessions SET
+                                    overall_score = ?,
+                                    technical_score = ?,
+                                    communication_score = ?,
+                                    total_questions = ?
+                                WHERE session_id = ?
+                            """, (
+                                avg_overall,
+                                technical_score,
+                                communication_score,
+                                exchange_count,
+                                session_id
+                            ))
+                            conn.commit()
+                        else:
+                            raise
                     
                     print(f"📊 AUTOMATED_EVAL: Updated session {session_id} statistics:")
                     print(f"   📈 Overall Score: {avg_overall:.1f}/10")
